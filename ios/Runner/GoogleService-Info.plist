@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>622235546854-csib1kpqrlpt9n35qcr6h6vdga3akt11.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.622235546854-csib1kpqrlpt9n35qcr6h6vdga3akt11</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>622235546854-0pcm1osjgcgeroc8b5bjc0v7lfo0t91d.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyA0Srx9MBD131lxyHitEK11s_-omq40GHM</string>
+	<key>GCM_SENDER_ID</key>
+	<string>622235546854</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.example.incomeTracker</string>
+	<key>PROJECT_ID</key>
+	<string>buckets-income-tracker</string>
+	<key>STORAGE_BUCKET</key>
+	<string>buckets-income-tracker.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:622235546854:ios:195a2471084a0c2e873727</string>
+</dict>
+</plist>

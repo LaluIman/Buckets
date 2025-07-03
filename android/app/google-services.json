@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "622235546854",
+    "project_id": "buckets-income-tracker",
+    "storage_bucket": "buckets-income-tracker.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:622235546854:android:55199e6f8b4cd69d873727",
+        "android_client_info": {
+          "package_name": "com.example.income_tracker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "622235546854-0pcm1osjgcgeroc8b5bjc0v7lfo0t91d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.income_tracker",
+            "certificate_hash": "abaac53e8ac711f8d7207975e12bfc04c9b27262"
+          }
+        },
+        {
+          "client_id": "622235546854-8socpu1svermgaa3ic2mnoedrg9hbrs3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMVDHv4fnyqZy6dz4SiYsrjDcutoRpPJw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "622235546854-8socpu1svermgaa3ic2mnoedrg9hbrs3.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "622235546854-csib1kpqrlpt9n35qcr6h6vdga3akt11.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.incomeTracker"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
