@@ -98,7 +98,7 @@ class _GoalDialogState extends State<GoalDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -275,6 +275,10 @@ class _GoalDialogState extends State<GoalDialog> {
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: Text('Konfirmasi Penghapusan'),
           content: Text('Apakah Anda yakin ingin menghapus tujuan ini?'),
           actions: [

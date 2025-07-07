@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:income_tracker/model/income.dart';
-import 'package:income_tracker/services/income_service.dart';
+import 'package:income_tracker/model/expense.dart';
+import 'package:income_tracker/services/expense_service.dart';
 import 'package:income_tracker/utils/constants.dart';
 import 'package:income_tracker/utils/app_localizations.dart';
 import 'package:income_tracker/widgets/custom_button.dart';
@@ -56,22 +56,22 @@ class ThousandsSeparatorInputFormatter extends TextInputFormatter {
   }
 }
 
-class AddScreen extends StatefulWidget {
-  final Income? income;
+class AddExpenseScreen extends StatefulWidget {
+  final Expense? expense;
 
-  const AddScreen({super.key, this.income});
+  const AddExpenseScreen({super.key, this.expense});
 
   @override
-  State<AddScreen> createState() => _AddScreenState();
+  State<AddExpenseScreen> createState() => _AddExpenseScreenState();
 }
 
-class _AddScreenState extends State<AddScreen> {
+class _AddExpenseScreenState extends State<AddExpenseScreen> {
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _categoryController = TextEditingController();
 
-  String _selectedCategory = 'Salary';
+  String _selectedCategory = 'Food';
   DateTime _selectedDate = DateTime.now();
   bool _isLoading = false;
 
@@ -87,15 +87,15 @@ class _AddScreenState extends State<AddScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.income != null) {
-      _amountController.text = _formatCurrency(widget.income!.amount);
-      _descriptionController.text = widget.income!.description;
-      _selectedCategory = widget.income!.category;
-      _selectedDate = widget.income!.date;
+    if (widget.expense != null) {
+      _amountController.text = _formatCurrency(widget.expense!.amount);
+      _descriptionController.text = widget.expense!.description;
+      _selectedCategory = widget.expense!.category;
+      _selectedDate = widget.expense!.date;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final incomeProvider = Provider.of<IncomeProvider>(context, listen: false);
-      incomeProvider.fetchCustomCategories();
+      final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
+      expenseProvider.fetchCustomCategories();
     });
   }
 
@@ -109,13 +109,12 @@ class _AddScreenState extends State<AddScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final incomeProvider = Provider.of<IncomeProvider>(context);
+    final expenseProvider = Provider.of<ExpenseProvider>(context);
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
         centerTitle: false,
-        leadingWidth: 150,
         leading: Padding(
           padding: EdgeInsets.only(left: 10),
           child: IconButton(
@@ -147,6 +146,7 @@ class _AddScreenState extends State<AddScreen> {
             ),
           ),
         ),
+        leadingWidth: 150,
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
@@ -163,7 +163,7 @@ class _AddScreenState extends State<AddScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.income != null ? l10n.get('edit_income') : l10n.get('add_income'),
+                        widget.expense != null ? l10n.get('edit_expense') : l10n.get('add_expense'),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -224,7 +224,6 @@ class _AddScreenState extends State<AddScreen> {
                             borderSide: BorderSide(color: Colors.grey.shade300),
                           ),
                         ),
-                        maxLines: 3,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return l10n.get('description_required');
@@ -254,16 +253,10 @@ class _AddScreenState extends State<AddScreen> {
                               ),
                               dropdownColor: Colors.white,
                               borderRadius: BorderRadius.circular(20),
-                              items: incomeProvider.categories.map((category) {
-                                return DropdownMenuItem(
+                              items: expenseProvider.categories.map((category) {
+                                return DropdownMenuItem<String>(
                                   value: category,
-                                  child: Text(
-                                    l10n.getCategoryName(category),
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
+                                  child: Text(l10n.getCategoryName(category)),
                                 );
                               }).toList(),
                               onChanged: (value) {
@@ -290,28 +283,23 @@ class _AddScreenState extends State<AddScreen> {
                       ),
                       SizedBox(height: 16),
                       InkWell(
-                        onTap: _selectDate,
+                        onTap: () => _selectDate(context),
                         child: Container(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 16,
-                            horizontal: 12,
-                          ),
+                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.grey.shade300),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
                             children: [
-                              Icon(
-                                Icons.calendar_today,
-                                color: Colors.grey.shade600,
-                              ),
+                              Icon(Icons.calendar_today, color: primaryColor),
                               SizedBox(width: 12),
                               Text(
-                                DateFormat(
-                                  'dd MMMM yyyy',
-                                ).format(_selectedDate),
-                                style: TextStyle(fontSize: 16),
+                                '${l10n.get('date')}: ${DateFormat('dd MMM yyyy').format(_selectedDate)}',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey.shade700,
+                                ),
                               ),
                             ],
                           ),
@@ -321,72 +309,20 @@ class _AddScreenState extends State<AddScreen> {
                   ),
                 ),
               ),
-              SizedBox(height: 32),
-              _isLoading
-                  ? SizedBox(
-                      height: 56,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryColor,
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          minimumSize: Size(double.infinity, 56),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        onPressed: null,
-                        child: SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    )
-                  : CustomButton(
-                      text: widget.income != null
-                          ? l10n.get('update_income')
-                          : l10n.get('add_income'),
-                      color: primaryColor,
-                      textColor: Colors.white,
-                      onPressed: _saveIncome,
-                    ),
+              SizedBox(height: 24),
+              CustomButton(
+                text: widget.expense != null ? l10n.get('update_expense') : l10n.get('add_expense'),
+                icon: null,
+                textColor: Colors.white,
+                color: primaryColor,
+                borderColor: primaryColor,
+                onPressed: _isLoading ? () {} : () => _submitForm(),
+              ),
             ],
           ),
         ),
       ),
     );
-  }
-
-  Future<void> _selectDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: primaryColor,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
   }
 
   void _showAddCategoryDialog(BuildContext context) {
@@ -417,8 +353,8 @@ class _AddScreenState extends State<AddScreen> {
           ElevatedButton(
             onPressed: () async {
               if (_categoryController.text.isNotEmpty) {
-                final incomeProvider = Provider.of<IncomeProvider>(context, listen: false);
-                await incomeProvider.addCustomCategory(_categoryController.text);
+                final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
+                await expenseProvider.addCustomCategory(_categoryController.text);
                 setState(() {
                   _selectedCategory = _categoryController.text;
                 });
@@ -433,7 +369,21 @@ class _AddScreenState extends State<AddScreen> {
     );
   }
 
-  Future<void> _saveIncome() async {
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(Duration(days: 1)),
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+
+  Future<void> _submitForm() async {
     final l10n = AppLocalizations.of(context);
     if (!_formKey.currentState!.validate()) return;
 
@@ -442,48 +392,35 @@ class _AddScreenState extends State<AddScreen> {
     });
 
     try {
-      final incomeProvider = Provider.of<IncomeProvider>(
-        context,
-        listen: false,
-      );
-      final user = FirebaseAuth.instance.currentUser!;
+      String digitsOnly = _amountController.text.replaceAll('.', '');
+      double amount = double.parse(digitsOnly);
 
-      String amountText = _amountController.text.replaceAll('.', '');
-      double amount = double.parse(amountText);
-
-      final income = Income(
-        id: widget.income?.id ?? '',
+      final expense = Expense(
+        id: widget.expense?.id ?? '',
         amount: amount,
-        description: _descriptionController.text.trim(),
+        description: _descriptionController.text,
         category: _selectedCategory,
         date: _selectedDate,
-        userId: user.uid,
+        userId: FirebaseAuth.instance.currentUser!.uid,
       );
 
-      if (widget.income != null) {
-        await incomeProvider.updateIncome(income);
+      final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
+
+      if (widget.expense != null) {
+        await expenseProvider.updateExpense(expense);
+        AppSnackbar.show(context, message: l10n.get('expense_updated_success'), backgroundColor: Colors.green);
       } else {
-        await incomeProvider.addIncome(income);
+        await expenseProvider.addExpense(expense);
+        AppSnackbar.show(context, message: l10n.get('expense_added_success'), backgroundColor: Colors.green);
       }
 
       Navigator.pop(context);
-      AppSnackbar.show(
-        context,
-        message: widget.income != null
-            ? l10n.get('income_updated_success')
-            : l10n.get('income_added_success'),
-        backgroundColor: Colors.green,
-      );
     } catch (e) {
-      AppSnackbar.show(
-        context,
-        message: l10n.get('error_occurred').replaceAll('{error}', e.toString()),
-        backgroundColor: Colors.red,
-      );
+      AppSnackbar.show(context, message: l10n.get('error_occurred').replaceAll('{error}', e.toString()), backgroundColor: Colors.red);
     } finally {
       setState(() {
         _isLoading = false;
       });
     }
   }
-}
+} 

@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:income_tracker/screens/add_screen.dart';
-import 'package:income_tracker/screens/history_screen.dart';
-import 'package:income_tracker/services/auth_service.dart';
+import 'package:income_tracker/screens/add_expense_screen.dart';
+
+import 'package:income_tracker/screens/combined_history_screen.dart';
 import 'package:income_tracker/services/income_service.dart';
+import 'package:income_tracker/services/expense_service.dart';
 import 'package:income_tracker/utils/constants.dart';
+import 'package:income_tracker/utils/app_localizations.dart';
 import 'package:income_tracker/widgets/custom_button.dart';
 import 'package:income_tracker/widgets/goal_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:income_tracker/widgets/app_snackbar.dart';
+import 'package:flutter_svg/svg.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,55 +22,37 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Add supported currencies
-  final List<Map<String, String>> currencies = [
-    {'code': 'IDR', 'symbol': 'Rp '},
-    {'code': 'USD', 'symbol': '\$'},
-    {'code': 'EUR', 'symbol': '€'},
-    {'code': 'JPY', 'symbol': '¥'},
-    {'code': 'GBP', 'symbol': '£'},
-  ];
-
-  String selectedCurrencyCode = 'IDR';
-  String selectedCurrencySymbol = 'Rp ';
   late NumberFormat currencyFormat;
 
   @override
   void initState() {
     super.initState();
     currencyFormat = NumberFormat.currency(
-      locale: 'id_ID',
-      symbol: selectedCurrencySymbol,
+      symbol: 'Rp ',
       decimalDigits: 0,
+      locale: 'id_ID',
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final incomeProvider = Provider.of<IncomeProvider>(
         context,
         listen: false,
       );
+      final expenseProvider = Provider.of<ExpenseProvider>(
+        context,
+        listen: false,
+      );
       incomeProvider.fetchIncomes();
       incomeProvider.fetchGoal();
-    });
-  }
-
-  void _onCurrencyChanged(String? code) {
-    if (code == null) return;
-    final currency = currencies.firstWhere((c) => c['code'] == code);
-    setState(() {
-      selectedCurrencyCode = code;
-      selectedCurrencySymbol = currency['symbol']!;
-      currencyFormat = NumberFormat.currency(
-        locale: code == 'IDR' ? 'id_ID' : code == 'USD' ? 'en_US' : code == 'EUR' ? 'en_IE' : code == 'JPY' ? 'ja_JP' : code == 'GBP' ? 'en_GB' : 'en_US',
-        symbol: selectedCurrencySymbol,
-        decimalDigits: 0,
-      );
+      expenseProvider.fetchExpenses();
+      expenseProvider.fetchCustomCategories();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
     final incomeProvider = Provider.of<IncomeProvider>(context);
+    final expenseProvider = Provider.of<ExpenseProvider>(context);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -88,91 +73,15 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         actions: [
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: selectedCurrencyCode,
-                icon: Icon(Icons.arrow_drop_down, color: primaryColor),
-                items: currencies.map((currency) {
-                  return DropdownMenuItem<String>(
-                    value: currency['code'],
-                    child: Text(currency['code']!, style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
-                  );
-                }).toList(),
-                onChanged: _onCurrencyChanged,
-                dropdownColor: Colors.white,
-                style: Theme.of(context).textTheme.titleMedium!.copyWith(color: primaryColor),
-              ),
-            ),
+          IconButton(
+            icon: Icon(Icons.settings, color: primaryColor),
+            tooltip: l10n.get('settings'),
+            onPressed: () {
+              Navigator.pushNamed(context, '/settings');
+            },
           ),
-          SizedBox(width: 15),
-          Container(
-            margin: EdgeInsets.only(right: 15),
-            padding: EdgeInsets.symmetric(horizontal: 10),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: IconButton(
-              onPressed: () async {
-                final shouldSignOut = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    backgroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    title: Row(
-                      children: [
-                        Icon(Icons.logout, color: Colors.red, size: 25),
-                      ],
-                    ),
-                    content: Text(
-                      'Are you sure you want to sign out?',
-                      style: Theme.of(context).textTheme.titleSmall!.copyWith(
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(false),
-                        child: Text(
-                          'Cancel',
-                          style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                            color: Colors.red.shade600,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      ElevatedButton(
-                        onPressed: () => Navigator.of(context).pop(true),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: Text('Sign Out', style: Theme.of(context).textTheme.titleSmall!.copyWith(
-                          color: Colors.white,
-                        ),),
-                      ),
-                    ],
-                  ),
-                );
-                if (shouldSignOut == true) {
-                  authProvider.signOut();
-                }
-              },
-              icon: Icon(Icons.logout, color: Colors.red,),
-            ),
-          ),
+          SizedBox(width: 8),
+          
         ],
       ),
       body: RefreshIndicator(
@@ -181,6 +90,8 @@ class _HomeScreenState extends State<HomeScreen> {
         onRefresh: () async {
           await incomeProvider.fetchIncomes();
           await incomeProvider.fetchGoal();
+          await expenseProvider.fetchExpenses();
+          await expenseProvider.fetchCustomCategories();
         },
         child: SingleChildScrollView(
           physics: AlwaysScrollableScrollPhysics(),
@@ -188,12 +99,12 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildTotalIncomeCard(incomeProvider),
+              _buildFinancialSummaryCard(incomeProvider, expenseProvider, l10n),
               SizedBox(height: 20),
-              _buildRecentIncomesCard(incomeProvider),
+              _buildRecentTransactionsCard(incomeProvider, expenseProvider, l10n),
               SizedBox(height: 20),
               CustomButton(
-                text: "See more",
+                text: l10n.get('all_transactions'),
                 icon: "assets/icons/history_icon.svg",
                 textColor: primaryColor,
                 color: Colors.grey.shade50,
@@ -202,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => HistoryScreen()),
+                    MaterialPageRoute(builder: (_) => CombinedHistoryScreen()),
                   );
                 },
               ),
@@ -212,10 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => AddScreen()),
-          );
+          _showAddOptionsDialog(context);
         },
         backgroundColor: primaryColor,
         child: Icon(Icons.add, color: Colors.white),
@@ -223,34 +131,107 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTotalIncomeCard(IncomeProvider incomeProvider) {
+  Widget _buildFinancialSummaryCard(IncomeProvider incomeProvider, ExpenseProvider expenseProvider, AppLocalizations l10n) {
+    final netIncome = incomeProvider.totalIncome - expenseProvider.totalExpenses;
+    
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),
-          color: primaryColor,
+          gradient: LinearGradient(
+            colors: [primaryColor, secondaryColor],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
         padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Total income',
+              l10n.get('bucket_summary'),
               style: Theme.of(
                 context,
               ).textTheme.titleMedium!.copyWith(color: Colors.white),
             ),
-            SizedBox(height: 8),
-            Text(
-              currencyFormat.format(incomeProvider.totalIncome),
-              style: Theme.of(context).textTheme.displaySmall!.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
+            SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.get('income'),
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                        ),
+                      ),
+                      Text(
+                        currencyFormat.format(incomeProvider.totalIncome),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.get('expense'),
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                        ),
+                      ),
+                      Text(
+                        currencyFormat.format(expenseProvider.totalExpenses),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    netIncome >= 0 ? Icons.trending_up : Icons.trending_down,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    '${l10n.get('balance')}: ${currencyFormat.format(netIncome)}',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
             if (incomeProvider.goal != null) ...[
-              SizedBox(height: 20),
+              SizedBox(height: 16),
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
@@ -284,7 +265,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   SizedBox(width: 10),
-                  Text(incomeProvider.goal != null ? 'Edit Goal' : 'Set Goal'),
+                  Text(incomeProvider.goal != null ? l10n.get('edit') : l10n.get('set_goal')),
                 ],
               ),
             ),
@@ -300,6 +281,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final clampedProgress = progress.clamp(0.0, 1.0);
 
     final daysLeft = goal.targetDate.difference(DateTime.now()).inDays;
+    final l10n = AppLocalizations.of(context);
 
     return Column(
       children: [
@@ -307,7 +289,7 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Target: ${currencyFormat.format(goal.targetAmount)}',
+              '${l10n.get('goal_amount')}: ${currencyFormat.format(goal.targetAmount)}',
               style: Theme.of(
                 context,
               ).textTheme.titleSmall!.copyWith(color: Colors.white),
@@ -335,10 +317,10 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Text(
               daysLeft > 0
-                  ? '$daysLeft days left'
+                  ? '$daysLeft ${l10n.get('days_left')}'
                   : daysLeft == 0
-                  ? 'Target today!'
-                  : 'Target passed',
+                  ? l10n.get('goal_achieved')
+                  : l10n.get('goal_passed'),
               style: Theme.of(context).textTheme.titleSmall!.copyWith(
                 color: daysLeft < 0 ? Colors.red.shade200 : Colors.white,
               ),
@@ -349,7 +331,34 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildRecentIncomesCard(IncomeProvider incomeProvider) {
+  Widget _buildRecentTransactionsCard(IncomeProvider incomeProvider, ExpenseProvider expenseProvider, AppLocalizations l10n) {
+    // Combine and sort all transactions by date
+    List<Map<String, dynamic>> allTransactions = [];
+    
+    // Add incomes
+    for (var income in incomeProvider.recentIncomes) {
+      allTransactions.add({
+        'type': 'income',
+        'data': income,
+        'date': income.date,
+      });
+    }
+    
+    // Add expenses
+    for (var expense in expenseProvider.recentExpenses) {
+      allTransactions.add({
+        'type': 'expense',
+        'data': expense,
+        'date': expense.date,
+      });
+    }
+    
+    // Sort by date (most recent first)
+    allTransactions.sort((a, b) => b['date'].compareTo(a['date']));
+    
+    // Take the most recent 5 transactions
+    final recentTransactions = allTransactions.take(3).toList();
+
     return Card(
       color: Colors.white,
       shape: RoundedRectangleBorder(
@@ -361,52 +370,59 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Text(
-                  'Recent Income',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleMedium!.copyWith(color: primaryColor),
-                ),
-              ],
+            Text(
+              l10n.get('recent_transactions'),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium!.copyWith(color: Colors.grey.shade800),
             ),
             SizedBox(height: 12),
-            if (incomeProvider.isLoading)
+            if (incomeProvider.isLoading || expenseProvider.isLoading)
               Center(child: CircularProgressIndicator(color: primaryColor))
-            else if (incomeProvider.recentIncomes.isEmpty)
-              _buildEmptyState()
+            else if (recentTransactions.isEmpty)
+              _buildEmptyTransactionsState(l10n)
             else
-              ...incomeProvider.recentIncomes.take(3).map(_buildIncomeItem),
+              ...recentTransactions.map((transaction) => _buildTransactionItem(transaction, l10n)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildEmptyState() {
+
+
+  Widget _buildEmptyTransactionsState(AppLocalizations l10n) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(Icons.inbox_outlined, size: 64, color: Colors.grey.shade400),
+          Icon(Icons.account_balance_wallet, size: 64, color: Colors.grey.shade400),
           SizedBox(height: 10),
           Text(
-            'No income yet',
+            l10n.get('no_transactions'),
             style: Theme.of(
               context,
             ).textTheme.titleMedium!.copyWith(color: Colors.grey.shade400),
           ),
           SizedBox(height: 8),
+          Text(
+            l10n.get('add_first_transaction'),
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade500,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildIncomeItem(income) {
+  Widget _buildTransactionItem(Map<String, dynamic> transaction, AppLocalizations l10n) {
+    final isIncome = transaction['type'] == 'income';
+    final data = transaction['data'];
+    
     return Container(
       margin: EdgeInsets.only(bottom: 12),
       padding: EdgeInsets.symmetric(vertical: 10),
@@ -422,16 +438,13 @@ class _HomeScreenState extends State<HomeScreen> {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: primaryColor,
+              color: Colors.grey.shade200,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: SvgPicture.asset(
-                _getCategoryIcon(income.category),
-                width: 25,
-                height: 25,
-                colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
+            child: Center(
+              child: Text(
+                isIncome ? _getCategoryIcon(data.category) : _getExpenseCategoryIcon(data.category),
+                style: TextStyle(fontSize: 25),
               ),
             ),
           ),
@@ -441,7 +454,7 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  income.description,
+                  data.description,
                   style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -450,14 +463,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 Row(
                   children: [
                     Text(
-                      income.category,
+                      l10n.getCategoryName(data.category),
                       style: TextStyle(
                         color: Colors.grey.shade600,
                         fontSize: 12,
                       ),
                     ),
                     Text(
-                      ' • ${DateFormat('dd MMM yyyy').format(income.date)}',
+                      ' • ${DateFormat('dd MMM yyyy').format(data.date)}',
                       style: TextStyle(
                         color: Colors.grey.shade600,
                         fontSize: 12,
@@ -469,10 +482,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           Text(
-            currencyFormat.format(income.amount),
+            '${isIncome ? '+' : '-'}${currencyFormat.format(data.amount)}',
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: Colors.green.shade600,
+              color: isIncome ? Colors.green.shade600 : Colors.red.shade600,
               fontSize: 14,
             ),
           ),
@@ -481,24 +494,48 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  _getCategoryIcon(String category) {
+  String _getCategoryIcon(String category) {
     switch (category) {
       case 'Salary':
-        return 'assets/icons/work_icon.svg';
+        return '💼';
       case 'Project':
-        return 'assets/icons/project_icon.svg';
+        return '📋';
       case 'Competition':
-        return 'assets/icons/competition_icon.svg';
+        return '🏆';
       case 'Award':
-        return 'assets/icons/award_icon.svg';
+        return '🏅';
       case 'Freelance':
-        return 'assets/icons/freelance_icon.svg';
+        return '💻';
+      case 'Sale':
+        return '📈';
       default:
-        return 'assets/icons/other_icon.svg';
+        return '💰';
+    }
+  }
+
+  String _getExpenseCategoryIcon(String category) {
+    switch (category.toLowerCase()) {
+      case 'food':
+        return '🍽️';
+      case 'transportation':
+        return '🚗';
+      case 'entertainment':
+        return '🎬';
+      case 'fuel':
+        return '⛽';
+      case 'groceries':
+        return '🛒';
+      case 'health':
+        return '🏥';
+      case 'rent':
+        return '🏠';
+      default:
+        return '💰';
     }
   }
 
   void _showGoalDialog(BuildContext context, IncomeProvider incomeProvider) {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (context) => GoalDialog(
@@ -510,10 +547,62 @@ class _HomeScreenState extends State<HomeScreen> {
           await incomeProvider.deleteGoal();
           AppSnackbar.show(
             context,
-            message: 'Goal deleted successfully',
+            message: l10n.get('goal_deleted'),
             backgroundColor: Colors.green,
           );
         },
+      ),
+    );
+  }
+
+  void _showAddOptionsDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Text(l10n.get('add'), style: Theme.of(context).textTheme.titleMedium!.copyWith(color: Colors.grey.shade800),),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              tileColor: Colors.grey.shade100,
+              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              leading: Icon(Icons.trending_up, color: Colors.green),
+              title: Text(l10n.get('add_income'), style: Theme.of(context).textTheme.titleMedium!.copyWith(color: Colors.grey.shade800),),
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => AddScreen()),
+                );
+              },
+            ),
+            SizedBox(height: 10),
+            ListTile(
+              tileColor: Colors.grey.shade100,
+              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              leading: Icon(Icons.trending_down, color: Colors.red),
+              title: Text(l10n.get('add_expense'), style: Theme.of(context).textTheme.titleMedium!.copyWith(color: Colors.grey.shade800),),
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => AddExpenseScreen()),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

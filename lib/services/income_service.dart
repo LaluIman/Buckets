@@ -26,13 +26,18 @@ class IncomeProvider with ChangeNotifier {
     return sortedIncomes.take(5).toList();
   }
 
-  final List<String> categories = [
+  final List<String> defaultCategories = [
     'Salary',
     'Project', 
     'Competition',
     'Award',
     'Freelance',
+    'Sale',
+    'Other',
   ];
+
+  List<String> _customCategories = [];
+  List<String> get categories => [...defaultCategories, ..._customCategories];
 
   Future<void> fetchIncomes() async {
     if (_auth.currentUser == null) return;
@@ -74,6 +79,23 @@ class IncomeProvider with ChangeNotifier {
       }
     } catch (e) {
       debugPrint('Error fetching goal: $e');
+    }
+  }
+
+  Future<void> fetchCustomCategories() async {
+    if (_auth.currentUser == null) return;
+
+    try {
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(_auth.currentUser!.uid)
+          .collection('customIncomeCategories')
+          .get();
+
+      _customCategories = snapshot.docs.map((doc) => doc.data()['name'] as String).toList();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error fetching custom categories: $e');
     }
   }
 
@@ -146,6 +168,43 @@ class IncomeProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint('Error deleting goal: $e');
+    }
+  }
+
+  Future<void> addCustomCategory(String categoryName) async {
+    if (_auth.currentUser == null) return;
+
+    try {
+      await _firestore
+          .collection('users')
+          .doc(_auth.currentUser!.uid)
+          .collection('customIncomeCategories')
+          .add({'name': categoryName});
+      
+      await fetchCustomCategories();
+    } catch (e) {
+      debugPrint('Error adding custom category: $e');
+    }
+  }
+
+  Future<void> deleteCustomCategory(String categoryName) async {
+    if (_auth.currentUser == null) return;
+
+    try {
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(_auth.currentUser!.uid)
+          .collection('customIncomeCategories')
+          .where('name', isEqualTo: categoryName)
+          .get();
+
+      for (var doc in snapshot.docs) {
+        await doc.reference.delete();
+      }
+      
+      await fetchCustomCategories();
+    } catch (e) {
+      debugPrint('Error deleting custom category: $e');
     }
   }
 }
