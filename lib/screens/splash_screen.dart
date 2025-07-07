@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:income_tracker/screens/root_screen.dart';
+import 'package:income_tracker/screens/auth_gate.dart';
 import 'package:income_tracker/utils/constants.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -20,7 +20,7 @@ class _SplashScreenState extends State<SplashScreen> {
     Timer(const Duration(seconds: 2), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => RootScreen()),
+        MaterialPageRoute(builder: (context) => AuthGate()),
       );
     });
   }

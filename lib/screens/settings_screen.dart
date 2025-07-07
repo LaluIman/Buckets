@@ -5,7 +5,8 @@ import 'package:income_tracker/services/auth_service.dart';
 import 'package:income_tracker/services/localization_service.dart';
 import 'package:income_tracker/utils/constants.dart';
 import 'package:income_tracker/utils/app_localizations.dart';
-import 'package:income_tracker/widgets/custom_button.dart';
+import 'package:income_tracker/widgets/app_snackbar.dart';
+import 'package:income_tracker/services/currency_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -19,6 +20,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final localizationService = Provider.of<LocalizationService>(context);
+    final currencyProvider = Provider.of<CurrencyProvider>(context);
     final user = authProvider.user;
     final l10n = AppLocalizations.of(context);
 
@@ -97,6 +99,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             SizedBox(height: 12),
             Text(
+              l10n.get('currency'),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            SizedBox(height: 12),
+            Card(
+              color: Colors.white,
+              child: ListTile(
+                leading: Icon(Icons.attach_money, color: primaryColor),
+                title: Text(currencyProvider.currencyName),
+                subtitle: Text(l10n.get('currency')),
+                trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                onTap: () => _showCurrencyDialog(context, currencyProvider),
+              ),
+            ),
+            SizedBox(height: 12),
+            Text(
               l10n.get('other'),
               style: Theme.of(context).textTheme.titleMedium,
             ),
@@ -111,55 +129,62 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             Spacer(),
-            CustomButton(
-              text: l10n.get('logout'),
-              icon: null,
-              color: Colors.red,
-              textColor: Colors.white,
-              onPressed: () async {
-                // Show confirmation dialog
-                bool? shouldLogout = await showDialog<bool>(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      backgroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      title: Text(l10n.get('confirm_logout')),
-                      content: Text(l10n.get('logout_message')),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(false),
-                          child: Text(l10n.get('cancel'), style: TextTheme.of(context).bodyMedium,),
-                        ),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 10
+            SizedBox(
+              height: 56,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  minimumSize: Size(double.infinity, 56),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: () async {
+                  // Show confirmation dialog
+                  bool? shouldLogout = await showDialog<bool>(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AppDialog(
+                        title: l10n.get('confirm_logout'),
+                        caption: l10n.get('logout_message'),
+                        options: [
+                          AppDialogOption(
+                            text: l10n.get('cancel'),
+                            onPressed: () => Navigator.of(context).pop(false),
                           ),
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            borderRadius: BorderRadius.circular(10)
-                          ),
-                          child: TextButton(
+                          AppDialogOption(
+                            text: l10n.get('yes_logout'),
                             onPressed: () => Navigator.of(context).pop(true),
-                            child: Text(l10n.get('yes_logout'),  style: TextTheme.of(context).bodyMedium?.copyWith(
-                              color: Colors.white
-                            ),),
+                            color: Colors.red,
                           ),
-                        ),
-                      ],
-                    );
-                  },
-                );
-                if (shouldLogout == true) {
-                  await authProvider.signOut();
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => AuthScreen()),
-                    (route) => false,
+                        ],
+                      );
+                    },
                   );
-                }
-              },
+                  if (shouldLogout == true) {
+                    await authProvider.signOut();
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => AuthScreen()),
+                      (route) => false,
+                    );
+                  }
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.logout, color: Colors.white),
+                    SizedBox(width: 10),
+                    Text(
+                      l10n.get('logout'),
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
@@ -202,6 +227,67 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 },
               );
             }).toList(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.get('cancel')),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showCurrencyDialog(BuildContext context, CurrencyProvider currencyProvider) {
+    final l10n = AppLocalizations.of(context);
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(l10n.get('currency')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: Text('Dollar (\$)'),
+                leading: Radio<AppCurrency>(
+                  value: AppCurrency.usd,
+                  groupValue: currencyProvider.currency,
+                  onChanged: (AppCurrency? value) {
+                    if (value != null) {
+                      currencyProvider.setCurrency(value);
+                      Navigator.of(context).pop();
+                    }
+                  },
+                ),
+                onTap: () {
+                  currencyProvider.setCurrency(AppCurrency.usd);
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                title: Text('Indonesian Rupiah (Rp)'),
+                leading: Radio<AppCurrency>(
+                  value: AppCurrency.idr,
+                  groupValue: currencyProvider.currency,
+                  onChanged: (AppCurrency? value) {
+                    if (value != null) {
+                      currencyProvider.setCurrency(value);
+                      Navigator.of(context).pop();
+                    }
+                  },
+                ),
+                onTap: () {
+                  currencyProvider.setCurrency(AppCurrency.idr);
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
           ),
           actions: [
             TextButton(

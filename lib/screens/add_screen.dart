@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:income_tracker/widgets/app_snackbar.dart';
+import '../services/currency_provider.dart';
 
 class ThousandsSeparatorInputFormatter extends TextInputFormatter {
   @override
@@ -109,8 +110,9 @@ class _AddScreenState extends State<AddScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final incomeProvider = Provider.of<IncomeProvider>(context);
     final l10n = AppLocalizations.of(context);
+    final incomeProvider = Provider.of<IncomeProvider>(context);
+    final currencyProvider = Provider.of<CurrencyProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -175,7 +177,7 @@ class _AddScreenState extends State<AddScreen> {
                         controller: _amountController,
                         decoration: InputDecoration(
                           labelText: 'Amount',
-                          prefixText: 'Rp ',
+                          prefixText: '${currencyProvider.currencySymbol} ',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -255,15 +257,56 @@ class _AddScreenState extends State<AddScreen> {
                               dropdownColor: Colors.white,
                               borderRadius: BorderRadius.circular(20),
                               items: incomeProvider.categories.map((category) {
+                                final isCustom = !incomeProvider.defaultCategories.contains(category);
+                                Widget row = Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      l10n.getCategoryName(category),
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                );
+                                if (isCustom) {
+                                  row = GestureDetector(
+                                    onLongPress: () async {
+                                      final shouldDelete = await showDialog<bool>(
+                                        context: context,
+                                        builder: (context) => AppDialog(
+                                          title: l10n.get('delete_category'),
+                                          caption: l10n.get('delete_category_confirm'),
+                                          options: [
+                                            AppDialogOption(
+                                              text: l10n.get('cancel'),
+                                              onPressed: () => Navigator.of(context).pop(false),
+                                            ),
+                                            AppDialogOption(
+                                              text: l10n.get('delete'),
+                                              color: Colors.red,
+                                              onPressed: () => Navigator.of(context).pop(true),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                      if (shouldDelete == true) {
+                                        await Provider.of<IncomeProvider>(context, listen: false).deleteCustomCategory(category);
+                                        if (_selectedCategory == category) {
+                                          setState(() {
+                                            _selectedCategory = incomeProvider.defaultCategories.first;
+                                          });
+                                        }
+                                      }
+                                    },
+                                    child: row,
+                                  );
+                                }
                                 return DropdownMenuItem(
                                   value: category,
-                                  child: Text(
-                                    l10n.getCategoryName(category),
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
+                                  child: row,
                                 );
                               }).toList(),
                               onChanged: (value) {
@@ -274,17 +317,18 @@ class _AddScreenState extends State<AddScreen> {
                             ),
                           ),
                           SizedBox(width: 8),
-                          IconButton(
+                          TextButton(
                             onPressed: () {
                               _showAddCategoryDialog(context);
                             },
-                            icon: Icon(Icons.add, color: primaryColor),
-                            style: IconButton.styleFrom(
+                            style: TextButton.styleFrom(
                               backgroundColor: Colors.grey.shade100,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
+                              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             ),
+                            child: Icon(Icons.add, color: primaryColor),
                           ),
                         ],
                       ),
@@ -364,7 +408,7 @@ class _AddScreenState extends State<AddScreen> {
 
   Future<void> _selectDate() async {
     final DateTime? picked = await showDatePicker(
-      context: context,
+      context: context, 
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
@@ -398,7 +442,7 @@ class _AddScreenState extends State<AddScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
-        title: Text(l10n.get('add_custom_category')),
+        title: Text(l10n.get('add_custom_category'), style: TextTheme.of(context).titleLarge,),
         content: TextField(
           controller: _categoryController,
           decoration: InputDecoration(
@@ -408,12 +452,18 @@ class _AddScreenState extends State<AddScreen> {
           autofocus: true,
         ),
         actions: [
-                      TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text(l10n.get('cancel')),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
+            child: Text(l10n.get('cancel'), style: TextStyle(color: primaryColor, fontWeight: FontWeight.w600)),
+          ),
           ElevatedButton(
             onPressed: () async {
               if (_categoryController.text.isNotEmpty) {
@@ -426,7 +476,14 @@ class _AddScreenState extends State<AddScreen> {
                 Navigator.of(context).pop();
               }
             },
-            child: Text(l10n.get('add')),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryColor,
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Icon(Icons.add, color: Colors.white),
           ),
         ],
       ),

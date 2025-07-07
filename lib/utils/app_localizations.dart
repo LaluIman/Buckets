@@ -26,6 +26,7 @@ class AppLocalizations {
       'developer': 'Pengembang',
       'support': 'Beri dukungan❤️',
       'close': 'Tutup',
+      'currency' : 'Mata uang',
       
       // Common
       'back': 'Kembali',
@@ -66,6 +67,7 @@ class AppLocalizations {
       'income': 'Pendapatan',
       'expense': 'Pengeluaran',
       'all' : 'semua',
+      'income_added_success': 'Pendapatan di tambahkan',
       
       // Categories
       'salary': 'Gaji',
@@ -140,6 +142,9 @@ class AppLocalizations {
       'confirm_delete': 'Konfirmasi Hapus',
       'delete_message': 'Apakah Anda yakin ingin menghapus item ini?',
       'yes_delete': 'Ya, Hapus',
+      // Delete Category Dialog
+      'delete_category': 'Hapus Kategori',
+      'delete_category_confirm': 'Apakah Anda yakin ingin menghapus kategori ini?',
     },
     'en': {
       // Settings Screen
@@ -168,6 +173,7 @@ class AppLocalizations {
       'feature_multilingual': '• Multi-language support',
       'feature_cloud_sync': '• Cloud sync with Firebase',
       'close': 'Close',
+      'currency' : 'Currencies',
 
       // Common
       'back': 'Back',
@@ -271,6 +277,9 @@ class AppLocalizations {
       'confirm_delete': 'Confirm Delete',
       'delete_message': 'Are you sure you want to delete this item?',
       'yes_delete': 'Yes, Delete',
+      // Delete Category Dialog
+      'delete_category': 'Delete Category',
+      'delete_category_confirm': 'Are you sure you want to delete this category?',
     },
   };
   

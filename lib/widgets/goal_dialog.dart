@@ -4,6 +4,8 @@ import 'package:flutter_svg/svg.dart';
 import 'package:income_tracker/model/income.dart';
 import 'package:income_tracker/utils/constants.dart';
 import 'package:intl/intl.dart';
+import 'package:income_tracker/utils/app_localizations.dart';
+import 'package:income_tracker/widgets/app_snackbar.dart';
 
 class ThousandsSeparatorInputFormatter extends TextInputFormatter {
   @override
@@ -96,6 +98,7 @@ class _GoalDialogState extends State<GoalDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AlertDialog(
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -114,8 +117,7 @@ class _GoalDialogState extends State<GoalDialog> {
             ),
           ),
           SizedBox(width: 10),
-          Text(
-            widget.currentGoal != null ? 'Edit Goal' : 'Set Goal',
+            Text(l10n.get('set_goal'),
             style: Theme.of(context).textTheme.titleLarge!.copyWith(
               color: primaryColor,
             ),
@@ -144,7 +146,7 @@ class _GoalDialogState extends State<GoalDialog> {
             TextFormField(
               controller: _amountController,
               decoration: InputDecoration(
-                labelText: 'Target Jumlah',
+                labelText: l10n.get('goal_amount'),
                 prefixText: 'Rp ',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -161,14 +163,14 @@ class _GoalDialogState extends State<GoalDialog> {
               ],
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Target jumlah tidak boleh kosong';
+                  return l10n.get('amount_required');
                 }
                 String digitsOnly = value.replaceAll('.', '');
                 if (double.tryParse(digitsOnly) == null) {
-                  return 'Masukkan jumlah yang valid';
+                  return l10n.get('invalid_amount');
                 }
                 if (double.parse(digitsOnly) <= 0) {
-                  return 'Target harus lebih dari 0';
+                  return l10n.get('amount_must_be_positive');
                 }
                 return null;
               },
@@ -191,7 +193,7 @@ class _GoalDialogState extends State<GoalDialog> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Target Tanggal',
+                            l10n.get('date'),
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey.shade600,
@@ -214,7 +216,7 @@ class _GoalDialogState extends State<GoalDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text('Batal', style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+          child: Text(l10n.get('cancel'), style: Theme.of(context).textTheme.bodyLarge!.copyWith(
             color: Colors.red.shade600,
             fontWeight: FontWeight.w600,
           ),),
@@ -228,7 +230,7 @@ class _GoalDialogState extends State<GoalDialog> {
               borderRadius: BorderRadius.circular(10),
             ),
           ),
-          child: Text(widget.currentGoal != null ? 'Update' : 'Simpan'),
+          child: Text(widget.currentGoal != null ? l10n.get('edit') : l10n.get('save')),
         ),
       ],
     );
@@ -271,31 +273,24 @@ class _GoalDialogState extends State<GoalDialog> {
   }
 
   void _showDeleteConfirmation() {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+      builder: (context) => AppDialog(
+        title: l10n.get('confirm_delete'),
+        caption: l10n.get('delete_message'),
+        options: [
+          AppDialogOption(
+            text: l10n.get('cancel'),
+            onPressed: () => Navigator.pop(context),
           ),
-          title: Text('Konfirmasi Penghapusan'),
-          content: Text('Apakah Anda yakin ingin menghapus tujuan ini?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Batal'),
-            ),
-            TextButton(
-              onPressed: _handleDelete,
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.red.shade600,
-              ),
-              child: Text('Hapus'),
-            ),
-          ],
-        );
-      },
+          AppDialogOption(
+            text: l10n.get('delete'),
+            onPressed: _handleDelete,
+            color: Colors.red.shade600,
+          ),
+        ],
+      ),
     );
   }
 

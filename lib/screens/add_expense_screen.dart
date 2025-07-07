@@ -9,7 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:income_tracker/widgets/app_snackbar.dart';
-
+import '../services/currency_provider.dart';
 class ThousandsSeparatorInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
@@ -109,8 +109,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final expenseProvider = Provider.of<ExpenseProvider>(context);
     final l10n = AppLocalizations.of(context);
+    final expenseProvider = Provider.of<ExpenseProvider>(context);
+    final currencyProvider = Provider.of<CurrencyProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -175,7 +176,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                         controller: _amountController,
                         decoration: InputDecoration(
                           labelText: 'Amount',
-                          prefixText: 'Rp ',
+                          prefixText: '${currencyProvider.currencySymbol} ',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -254,9 +255,52 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                               dropdownColor: Colors.white,
                               borderRadius: BorderRadius.circular(20),
                               items: expenseProvider.categories.map((category) {
+                                final isCustom = !expenseProvider.defaultCategories.contains(category);
+                                Widget row = Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      l10n.getCategoryName(category),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                );
+                                if (isCustom) {
+                                  row = GestureDetector(
+                                    onLongPress: () async {
+                                      final shouldDelete = await showDialog<bool>(
+                                        context: context,
+                                        builder: (context) => AppDialog(
+                                          title: l10n.get('delete_category'),
+                                          caption: l10n.get('delete_category_confirm'),
+                                          options: [
+                                            AppDialogOption(
+                                              text: l10n.get('cancel'),
+                                              onPressed: () => Navigator.of(context).pop(false),
+                                            ),
+                                            AppDialogOption(
+                                              text: l10n.get('delete'),
+                                              color: Colors.red,
+                                              onPressed: () => Navigator.of(context).pop(true),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                      if (shouldDelete == true) {
+                                        await Provider.of<ExpenseProvider>(context, listen: false).deleteCustomCategory(category);
+                                        if (_selectedCategory == category) {
+                                          setState(() {
+                                            _selectedCategory = expenseProvider.defaultCategories.first;
+                                          });
+                                        }
+                                      }
+                                    },
+                                    child: row,
+                                  );
+                                }
                                 return DropdownMenuItem<String>(
                                   value: category,
-                                  child: Text(l10n.getCategoryName(category)),
+                                  child: row,
                                 );
                               }).toList(),
                               onChanged: (value) {
@@ -267,17 +311,18 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                             ),
                           ),
                           SizedBox(width: 8),
-                          IconButton(
+                          TextButton(
                             onPressed: () {
                               _showAddCategoryDialog(context);
                             },
-                            icon: Icon(Icons.add, color: primaryColor),
-                            style: IconButton.styleFrom(
+                            style: TextButton.styleFrom(
                               backgroundColor: Colors.grey.shade100,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
+                              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             ),
+                            child: Icon(Icons.add, color: primaryColor),
                           ),
                         ],
                       ),
@@ -334,7 +379,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
-        title: Text(l10n.get('add_custom_category')),
+        title: Text(l10n.get('add_custom_category'), style: TextTheme.of(context).titleLarge,),
         content: TextField(
           controller: _categoryController,
           decoration: InputDecoration(
@@ -344,12 +389,18 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           autofocus: true,
         ),
         actions: [
-                      TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text(l10n.get('cancel')),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
+            child: Text(l10n.get('cancel'), style: TextStyle(color: primaryColor, fontWeight: FontWeight.w600)),
+          ),
           ElevatedButton(
             onPressed: () async {
               if (_categoryController.text.isNotEmpty) {
@@ -362,7 +413,14 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 Navigator.of(context).pop();
               }
             },
-            child: Text(l10n.get('add')),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryColor,
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Icon(Icons.add, color: Colors.white),
           ),
         ],
       ),

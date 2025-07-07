@@ -13,6 +13,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:income_tracker/widgets/app_snackbar.dart';
 import 'package:flutter_svg/svg.dart';
+import '../services/currency_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -22,16 +23,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late NumberFormat currencyFormat;
-
   @override
   void initState() {
     super.initState();
-    currencyFormat = NumberFormat.currency(
-      symbol: 'Rp ',
-      decimalDigits: 0,
-      locale: 'id_ID',
-    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final incomeProvider = Provider.of<IncomeProvider>(
         context,
@@ -53,6 +47,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final incomeProvider = Provider.of<IncomeProvider>(context);
     final expenseProvider = Provider.of<ExpenseProvider>(context);
     final l10n = AppLocalizations.of(context);
+    final currencyProvider = Provider.of<CurrencyProvider>(context);
+    final currencyFormat = NumberFormat.currency(
+      symbol: '${currencyProvider.currencySymbol} ',
+      decimalDigits: 0,
+      locale: currencyProvider.currency == AppCurrency.idr ? 'id_ID' : 'en_US',
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -99,9 +99,9 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildFinancialSummaryCard(incomeProvider, expenseProvider, l10n),
+              _buildFinancialSummaryCard(incomeProvider, expenseProvider, l10n, currencyFormat),
               SizedBox(height: 20),
-              _buildRecentTransactionsCard(incomeProvider, expenseProvider, l10n),
+              _buildRecentTransactionsCard(incomeProvider, expenseProvider, l10n, currencyFormat),
               SizedBox(height: 20),
               CustomButton(
                 text: l10n.get('all_transactions'),
@@ -131,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildFinancialSummaryCard(IncomeProvider incomeProvider, ExpenseProvider expenseProvider, AppLocalizations l10n) {
+  Widget _buildFinancialSummaryCard(IncomeProvider incomeProvider, ExpenseProvider expenseProvider, AppLocalizations l10n, NumberFormat currencyFormat) {
     final netIncome = incomeProvider.totalIncome - expenseProvider.totalExpenses;
     
     return Card(
@@ -238,7 +238,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Colors.white24,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: _buildGoalProgress(incomeProvider),
+                child: _buildGoalProgress(incomeProvider, currencyFormat),
               ),
             ],
             SizedBox(height: 16),
@@ -275,7 +275,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildGoalProgress(IncomeProvider incomeProvider) {
+  Widget _buildGoalProgress(IncomeProvider incomeProvider, NumberFormat currencyFormat) {
     final goal = incomeProvider.goal!;
     final progress = incomeProvider.totalIncome / goal.targetAmount;
     final clampedProgress = progress.clamp(0.0, 1.0);
@@ -331,7 +331,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildRecentTransactionsCard(IncomeProvider incomeProvider, ExpenseProvider expenseProvider, AppLocalizations l10n) {
+  Widget _buildRecentTransactionsCard(IncomeProvider incomeProvider, ExpenseProvider expenseProvider, AppLocalizations l10n, NumberFormat currencyFormat) {
     // Combine and sort all transactions by date
     List<Map<String, dynamic>> allTransactions = [];
     
@@ -378,11 +378,13 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             SizedBox(height: 12),
             if (incomeProvider.isLoading || expenseProvider.isLoading)
-              Center(child: CircularProgressIndicator(color: primaryColor))
+              SizedBox(
+                height: 150,
+                child: Center(child: CircularProgressIndicator(color: primaryColor)))
             else if (recentTransactions.isEmpty)
               _buildEmptyTransactionsState(l10n)
             else
-              ...recentTransactions.map((transaction) => _buildTransactionItem(transaction, l10n)),
+              ...recentTransactions.map((transaction) => _buildTransactionItem(transaction, l10n, currencyFormat)),
           ],
         ),
       ),
@@ -419,7 +421,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTransactionItem(Map<String, dynamic> transaction, AppLocalizations l10n) {
+  Widget _buildTransactionItem(Map<String, dynamic> transaction, AppLocalizations l10n, NumberFormat currencyFormat) {
     final isIncome = transaction['type'] == 'income';
     final data = transaction['data'];
     

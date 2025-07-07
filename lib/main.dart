@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:income_tracker/screens/splash_screen.dart';
 import 'package:income_tracker/screens/settings_screen.dart';
 import 'package:income_tracker/services/auth_service.dart';
+import 'package:income_tracker/services/currency_provider.dart';
 import 'package:income_tracker/services/income_service.dart';
 import 'package:income_tracker/services/expense_service.dart';
 import 'package:income_tracker/services/localization_service.dart';
@@ -28,6 +29,7 @@ class MainApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => IncomeProvider()),
         ChangeNotifierProvider(create: (context) => ExpenseProvider()),
         ChangeNotifierProvider(create: (context) => LocalizationService()),
+        ChangeNotifierProvider(create: (context) => CurrencyProvider()),
       ],
       child: Consumer<LocalizationService>(
         builder: (context, localizationService, child) {

@@ -7,6 +7,7 @@ import 'package:income_tracker/utils/constants.dart';
 import 'package:income_tracker/utils/app_localizations.dart';
 
 import 'package:provider/provider.dart';
+import '../services/currency_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:income_tracker/widgets/app_snackbar.dart';
 import 'package:income_tracker/screens/add_screen.dart';
@@ -261,6 +262,7 @@ class _CombinedHistoryScreenState extends State<CombinedHistoryScreen>
 
   Widget _buildIncomeTab() {
     final l10n = AppLocalizations.of(context);
+    final currencyProvider = Provider.of<CurrencyProvider>(context);
     return Consumer<IncomeProvider>(
       builder: (context, incomeProvider, child) {
         if (incomeProvider.isLoading) {
@@ -272,6 +274,7 @@ class _CombinedHistoryScreenState extends State<CombinedHistoryScreen>
           0.0,
           (sum, income) => sum + income.amount,
         );
+        final currencySymbol = currencyProvider.currencySymbol;
 
         return Column(
           children: [
@@ -308,7 +311,7 @@ class _CombinedHistoryScreenState extends State<CombinedHistoryScreen>
                               ),
                             ),
                             Text(
-                              'Rp ${NumberFormat('#,###').format(totalAmount)}',
+                              '$currencySymbol ${NumberFormat('#,###').format(totalAmount)}',
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -417,7 +420,7 @@ class _CombinedHistoryScreenState extends State<CombinedHistoryScreen>
                                     ),
                                   ),
                                   Text(
-                                    'Rp ${NumberFormat('#,###').format(income.amount)}',
+                                    '$currencySymbol ${NumberFormat('#,###').format(income.amount)}',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: Colors.green.shade600,
@@ -440,6 +443,7 @@ class _CombinedHistoryScreenState extends State<CombinedHistoryScreen>
 
   Widget _buildExpenseTab() {
     final l10n = AppLocalizations.of(context);
+    final currencyProvider = Provider.of<CurrencyProvider>(context);
     return Consumer<ExpenseProvider>(
       builder: (context, expenseProvider, child) {
         if (expenseProvider.isLoading) {
@@ -451,6 +455,7 @@ class _CombinedHistoryScreenState extends State<CombinedHistoryScreen>
           0.0,
           (sum, expense) => sum + expense.amount,
         );
+        final currencySymbol = currencyProvider.currencySymbol;
 
         return Column(
           children: [
@@ -488,7 +493,7 @@ class _CombinedHistoryScreenState extends State<CombinedHistoryScreen>
                               ),
                             ),
                             Text(
-                              'Rp ${NumberFormat('#,###').format(totalAmount)}',
+                              '$currencySymbol ${NumberFormat('#,###').format(totalAmount)}',
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -597,7 +602,7 @@ class _CombinedHistoryScreenState extends State<CombinedHistoryScreen>
                                     ),
                                   ),
                                   Text(
-                                    'Rp ${NumberFormat('#,###').format(expense.amount)}',
+                                    '$currencySymbol ${NumberFormat('#,###').format(expense.amount)}',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: Colors.red.shade700,
@@ -622,26 +627,20 @@ class _CombinedHistoryScreenState extends State<CombinedHistoryScreen>
     final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-                    title: Text(l10n.get('confirm_delete')),
-            content: Text(l10n.get('delete_message')),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(l10n.get('cancel')),
-              ),
-          ElevatedButton(
+      builder: (context) => AppDialog(
+        title: l10n.get('confirm_delete'),
+        caption: l10n.get('delete_message'),
+        options: [
+          AppDialogOption(
+            text: l10n.get('cancel'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          AppDialogOption(
+            text: l10n.get('delete'),
             onPressed: () async {
               Navigator.of(context).pop(); // Close dialog
               Navigator.of(context).pop(); // Close bottom sheet
-              final incomeProvider = Provider.of<IncomeProvider>(
-                context,
-                listen: false,
-              );
+              final incomeProvider = Provider.of<IncomeProvider>(context, listen: false);
               await incomeProvider.deleteIncome(income.id);
               AppSnackbar.show(
                 context,
@@ -649,8 +648,7 @@ class _CombinedHistoryScreenState extends State<CombinedHistoryScreen>
                 backgroundColor: Colors.green,
               );
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text(l10n.get('delete'), style: TextStyle(color: Colors.white)),
+            color: Colors.red,
           ),
         ],
       ),
@@ -661,26 +659,20 @@ class _CombinedHistoryScreenState extends State<CombinedHistoryScreen>
     final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        title: Text(l10n.get('confirm_delete')),
-        content: Text(l10n.get('delete_message')),
-        actions: [
-          TextButton(
+      builder: (context) => AppDialog(
+        title: l10n.get('confirm_delete'),
+        caption: l10n.get('delete_message'),
+        options: [
+          AppDialogOption(
+            text: l10n.get('cancel'),
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.get('cancel')),
           ),
-          ElevatedButton(
+          AppDialogOption(
+            text: l10n.get('delete'),
             onPressed: () async {
               Navigator.of(context).pop(); 
               Navigator.of(context).pop(); 
-              final expenseProvider = Provider.of<ExpenseProvider>(
-                context,
-                listen: false,
-              );
+              final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
               await expenseProvider.deleteExpense(expense.id);
               AppSnackbar.show(
                 context,
@@ -688,8 +680,7 @@ class _CombinedHistoryScreenState extends State<CombinedHistoryScreen>
                 backgroundColor: Colors.green,
               );
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text(l10n.get('delete'), style: TextStyle(color: Colors.white)),
+            color: Colors.red,
           ),
         ],
       ),

@@ -10,9 +10,13 @@ class AuthProvider with ChangeNotifier {
   User? get user => _auth.currentUser;
   bool _isLoading = false;
   bool get isLoading => _isLoading;
+  bool _isInitialized = false;
+  bool get isInitialized => _isInitialized;
 
   AuthProvider() {
     _auth.authStateChanges().listen((User? user) {
+      _isInitialized = true;
+      debugPrint('Auth state changed: user= [32m [1m${user?.uid} [0m');
       notifyListeners();
     });
   }
