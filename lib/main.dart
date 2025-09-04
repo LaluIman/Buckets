@@ -10,11 +10,14 @@ import 'package:income_tracker/services/expense_service.dart';
 import 'package:income_tracker/services/localization_service.dart';
 import 'package:income_tracker/utils/constants.dart';
 import 'package:income_tracker/utils/app_localizations.dart';
+import 'package:income_tracker/firebase_options.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(MainApp());
 }
 
@@ -31,8 +34,8 @@ class MainApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => LocalizationService()),
         ChangeNotifierProvider(create: (context) => CurrencyProvider()),
       ],
-      child: Consumer<LocalizationService>(
-        builder: (context, localizationService, child) {
+      child: Consumer2<LocalizationService, CurrencyProvider>(
+        builder: (context, localizationService, currencyProvider, child) {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
             theme: themeData(),

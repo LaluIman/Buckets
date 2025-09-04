@@ -59,134 +59,136 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.get('account'),
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            SizedBox(height: 12),
-            Card(
-              color: Colors.white,
-              child: ListTile(
-                leading: Icon(Icons.email, color: primaryColor),
-                title: Text(
-                  user?.email ?? '-',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.get('account'),
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              SizedBox(height: 12),
+              Card(
+                color: Colors.white,
+                child: ListTile(
+                  leading: Icon(Icons.email, color: primaryColor),
+                  title: Text(
+                    user?.email ?? '-',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: Text(l10n.get('email')),
                 ),
-                subtitle: Text(l10n.get('email')),
               ),
-            ),
-            SizedBox(height: 24),
-            Text(
-              l10n.get('language'),
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            SizedBox(height: 12),
-            Card(
-              color: Colors.white,
-              child: ListTile(
-                leading: Icon(Icons.language, color: primaryColor),
-                title: Text(localizationService.getCurrentLanguageName()),
-                subtitle: Text(l10n.get('language')),
-                trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey),
-                onTap: () =>
-                    _showLanguageDialog(context, localizationService, l10n),
+              SizedBox(height: 24),
+              Text(
+                l10n.get('language'),
+                style: Theme.of(context).textTheme.titleMedium,
               ),
-            ),
-            SizedBox(height: 12),
-            Text(
-              l10n.get('currency'),
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            SizedBox(height: 12),
-            Card(
-              color: Colors.white,
-              child: ListTile(
-                leading: Icon(Icons.attach_money, color: primaryColor),
-                title: Text(currencyProvider.currencyName),
-                subtitle: Text(l10n.get('currency')),
-                trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey),
-                onTap: () => _showCurrencyDialog(context, currencyProvider),
+              SizedBox(height: 12),
+              Card(
+                color: Colors.white,
+                child: ListTile(
+                  leading: Icon(Icons.language, color: primaryColor),
+                  title: Text(localizationService.getCurrentLanguageName()),
+                  subtitle: Text(l10n.get('language')),
+                  trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                  onTap: () =>
+                      _showLanguageDialog(context, localizationService, l10n),
+                ),
               ),
-            ),
-            SizedBox(height: 12),
-            Text(
-              l10n.get('other'),
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            SizedBox(height: 12),
-            Card(
-              color: Colors.white,
-              child: ListTile(
-                leading: Icon(Icons.apps, color: primaryColor),
-                title: Text(l10n.get('info')),
-                trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey),
-                onTap: () => _showAboutBottomSheet(context, l10n),
+              SizedBox(height: 12),
+              Text(
+                l10n.get('currency'),
+                style: Theme.of(context).textTheme.titleMedium,
               ),
-            ),
-            Spacer(),
-            SizedBox(
-              height: 56,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  minimumSize: Size(double.infinity, 56),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+              SizedBox(height: 12),
+              Card(
+                color: Colors.white,
+                child: ListTile(
+                  leading: Icon(Icons.attach_money, color: primaryColor),
+                  title: Text(currencyProvider.currencyName),
+                  subtitle: Text(l10n.get('currency')),
+                  trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                  onTap: () => _showCurrencyDialog(context, currencyProvider),
+                ),
+              ),
+              SizedBox(height: 12),
+              Text(
+                l10n.get('other'),
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              SizedBox(height: 12),
+              Card(
+                color: Colors.white,
+                child: ListTile(
+                  leading: Icon(Icons.apps, color: primaryColor),
+                  title: Text(l10n.get('info')),
+                  trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                  onTap: () => _showAboutBottomSheet(context, l10n),
+                ),
+              ),
+              Spacer(),
+              SizedBox(
+                height: 56,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    minimumSize: Size(double.infinity, 56),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: () async {
+                    // Show confirmation dialog
+                    bool? shouldLogout = await showDialog<bool>(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AppDialog(
+                          title: l10n.get('confirm_logout'),
+                          caption: l10n.get('logout_message'),
+                          options: [
+                            AppDialogOption(
+                              text: l10n.get('cancel'),
+                              onPressed: () => Navigator.of(context).pop(false),
+                            ),
+                            AppDialogOption(
+                              text: l10n.get('yes_logout'),
+                              onPressed: () => Navigator.of(context).pop(true),
+                              color: Colors.red,
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                    if (shouldLogout == true) {
+                      await authProvider.signOut();
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (_) => AuthScreen()),
+                        (route) => false,
+                      );
+                    }
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.logout, color: Colors.white),
+                      SizedBox(width: 10),
+                      Text(
+                        l10n.get('logout'),
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                onPressed: () async {
-                  // Show confirmation dialog
-                  bool? shouldLogout = await showDialog<bool>(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AppDialog(
-                        title: l10n.get('confirm_logout'),
-                        caption: l10n.get('logout_message'),
-                        options: [
-                          AppDialogOption(
-                            text: l10n.get('cancel'),
-                            onPressed: () => Navigator.of(context).pop(false),
-                          ),
-                          AppDialogOption(
-                            text: l10n.get('yes_logout'),
-                            onPressed: () => Navigator.of(context).pop(true),
-                            color: Colors.red,
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                  if (shouldLogout == true) {
-                    await authProvider.signOut();
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (_) => AuthScreen()),
-                      (route) => false,
-                    );
-                  }
-                },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.logout, color: Colors.white),
-                    SizedBox(width: 10),
-                    Text(
-                      l10n.get('logout'),
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -258,15 +260,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 leading: Radio<AppCurrency>(
                   value: AppCurrency.usd,
                   groupValue: currencyProvider.currency,
-                  onChanged: (AppCurrency? value) {
+                  onChanged: (AppCurrency? value) async {
                     if (value != null) {
-                      currencyProvider.setCurrency(value);
+                      await currencyProvider.setCurrency(value);
                       Navigator.of(context).pop();
                     }
                   },
                 ),
-                onTap: () {
-                  currencyProvider.setCurrency(AppCurrency.usd);
+                onTap: () async {
+                  await currencyProvider.setCurrency(AppCurrency.usd);
                   Navigator.of(context).pop();
                 },
               ),
@@ -275,15 +277,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 leading: Radio<AppCurrency>(
                   value: AppCurrency.idr,
                   groupValue: currencyProvider.currency,
-                  onChanged: (AppCurrency? value) {
+                  onChanged: (AppCurrency? value) async {
                     if (value != null) {
-                      currencyProvider.setCurrency(value);
+                      await currencyProvider.setCurrency(value);
                       Navigator.of(context).pop();
                     }
                   },
                 ),
-                onTap: () {
-                  currencyProvider.setCurrency(AppCurrency.idr);
+                onTap: () async {
+                  await currencyProvider.setCurrency(AppCurrency.idr);
                   Navigator.of(context).pop();
                 },
               ),
@@ -340,7 +342,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 SizedBox(height: 8),
                 Text(
-                  l10n.get('app_version'),
+                  "1.2.1",
                   style: Theme.of(
                     context,
                   ).textTheme.bodyLarge?.copyWith(height: 1.5),

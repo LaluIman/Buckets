@@ -236,7 +236,7 @@ class _CombinedHistoryScreenState extends State<CombinedHistoryScreen>
                   items: _filterOptions.map((filter) {
                     return DropdownMenuItem<String>(
                       value: filter,
-                      child: Text(l10n.get(filter)),
+                      child: Text(l10n.get(filter), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),),
                     );
                   }).toList(),
                   onChanged: (value) {

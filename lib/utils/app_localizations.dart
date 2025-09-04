@@ -22,7 +22,6 @@ class AppLocalizations {
       'cancel': 'Batal',
       'yes_logout': 'Ya, Keluar',
       'app': 'Info Aplikasi',
-      'app_version': 'Versi 1.1.0',
       'developer': 'Pengembang',
       'support': 'Beri dukungan❤️',
       'close': 'Tutup',

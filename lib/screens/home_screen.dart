@@ -93,31 +93,33 @@ class _HomeScreenState extends State<HomeScreen> {
           await expenseProvider.fetchExpenses();
           await expenseProvider.fetchCustomCategories();
         },
-        child: SingleChildScrollView(
-          physics: AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildFinancialSummaryCard(incomeProvider, expenseProvider, l10n, currencyFormat),
-              SizedBox(height: 20),
-              _buildRecentTransactionsCard(incomeProvider, expenseProvider, l10n, currencyFormat),
-              SizedBox(height: 20),
-              CustomButton(
-                text: l10n.get('all_transactions'),
-                icon: "assets/icons/history_icon.svg",
-                textColor: primaryColor,
-                color: Colors.grey.shade50,
-                borderColor: Colors.grey.shade300,
-                borderWidth: 2,
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => CombinedHistoryScreen()),
-                  );
-                },
-              ),
-            ],
+        child: SafeArea(
+          child: SingleChildScrollView(
+            physics: AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildFinancialSummaryCard(incomeProvider, expenseProvider, l10n, currencyFormat),
+                SizedBox(height: 20),
+                _buildRecentTransactionsCard(incomeProvider, expenseProvider, l10n, currencyFormat),
+                SizedBox(height: 20),
+                CustomButton(
+                  text: l10n.get('all_transactions'),
+                  icon: "assets/icons/history_icon.svg",
+                  textColor: primaryColor,
+                  color: Colors.grey.shade50,
+                  borderColor: Colors.grey.shade300,
+                  borderWidth: 2,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => CombinedHistoryScreen()),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),
